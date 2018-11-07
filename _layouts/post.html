@@ -3,14 +3,14 @@ layout: layout
 ---
 
 <div class="container">
-	<div class="blog-post">
-		<h3>
-		  <strong><a href="{{ page.url }}">{{ page.title }}</a></strong>
-		</h3>
-	</div>
+
+	<h2>
+	  <strong>{{ page.title }}</strong>
+	</h2>
+
 	<div class="blog-title">
 		<h4>
-		{{ page.date | date: "%B %e, %Y" }}
+		{{ page.date | date: "%Y/%m/%d" }}
 			&nbsp;&nbsp;
 			{% for tag in page.tags %}
 			 <span class="label label-success">{{ tag }}</span>
