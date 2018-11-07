@@ -19,13 +19,7 @@ description: Personal website
 avatar: profile.png
 email: wsgh@cs.ubc.ca
 github: wsgharvey
-twitter: username
-linkedin: username
-stackoverflow: username   #e.g: users/2735833/proton1h1
 #Comment out if you don't want disqus
 #disqus: username
 google_analytics: UA-69391421-1
 
-
-# needed for travis-ci build
-#exclude: [vendor] not using github pages
