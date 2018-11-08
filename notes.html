@@ -1,6 +1,28 @@
 ---
-layout: page
+layout: layout
 title: Notes
 ---
 
-{% include notes.html %}
+<div class="container">
+<h2 style="text-align: left"> Notes </h2> 
+<h4 style="text-align: left"> Written up mainly for my own understanding. </h4>
+  <div class="panel panel-default">
+    <div class="panel-body">
+		{% for post in site.posts %}
+			<div class="row">
+				 <div class="col-sm-4 col-md-4 col-lg-4">
+					 <h5 style="text-align: right"> 
+					 	{{ post.date | date: "%Y/%m/%d" }}
+					 </h5>
+				 </div>
+				 <div class="col-sm-8 col-md-8 col-lg-8">
+					 <h5 style="text-align: left">
+					 	<strong><a href="{{ site.baseurl | prepend: site.url }}{{ post.url}}">{{ post.title }}</a></strong>
+
+					 </h5>
+				 </div>
+			</div>
+	    {% endfor %}
+	</div>
+  </div>
+</div>

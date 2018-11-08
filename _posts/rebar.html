@@ -1,0 +1,79 @@
+---
+layout: post
+title: A stupid test
+excerpt: A test note.
+mathjax: true
+---
+
+<div id="outline-container-orga3ea5d3" class="outline-2">
+<h2 id="orga3ea5d3"><span class="section-number-2">1</span> Motivation</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+We want to differentiate through expectations of programs with discrete RVs. With non-discrete variables, we can use the reparameterization trick:
+</p>
+\begin{align}
+\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f(x)] &= \frac{\partial}{\partial \theta} \mathbb{E}_{p(z)} [ f(g(z, \theta)) ] \quad \text{where} \quad g(z, \theta) \overset{d}{=} x\\
+&= \mathbb{E}_{p(z)} [ \frac{\partial}{\partial \theta} f(g(z, \theta)) ] \quad \text{for $g$ satisfying certain properties}
+\end{align}
+<p>
+Note that this can be modified to allow \(f\) to depend on \(x\) and \(\theta\). When \(x\) (and therefore \(g\)) is discrete, exchanging the expectation and derivative is not valid, so we cannot use the reparameterization trick. Therefore, the derivative is typically estimated using the REINFORCE estimator:
+</p>
+\begin{align}
+\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f_\theta(x)]
+&= \frac{\partial}{\partial \theta} \int_x f(x) p_\theta(x)  dx \\
+&= \int_x f(x) \frac{\partial p}{\partial \theta}(x) dx \\
+&= \int_x p(x) f(x) \frac{\partial}{\partial \theta}\log p_\theta(x) dx \\
+&= \mathbb{E}_{p_\theta(x)} [f(x)  \frac{\partial}{\partial \theta}\log p_\theta(x)]
+\end{align}
+<p>
+However, this estimator has very high variance. This paper looks at how to reduce this variance.
+</p>
+</div>
+</div>
+<div id="outline-container-orgf15ac07" class="outline-2">
+<h2 id="orgf15ac07"><span class="section-number-2">2</span> Background</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-orgc57b35c" class="outline-3">
+<h3 id="orgc57b35c"><span class="section-number-3">2.1</span> Control variates</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Control variates can be used in combination with REINFORCE to reduce the variance:
+</p>
+\begin{align}
+\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f(x)]
+&= \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f(x)-c(x)] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}(c(x)) \\
+&= \mathbb{E}_{p_\theta(x)} [(f(x) - c(x)) \frac{\partial}{\partial \theta}\log p_\theta(x)] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}(c(x))
+\end{align}
+<p>
+\(c\) can be chosen so that there is a closed-form expression for the second term, \(\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}(c(x))\), and so that it is close to \(f(x)\), reducing the variance in estimates of the first term. However, there can still be high variance. Finding a good \(c\) is also presumably hard to automate.
+</p>
+</div>
+</div>
+<div id="outline-container-orgcccf082" class="outline-3">
+<h3 id="orgcccf082"><span class="section-number-3">2.2</span> Continuous relaxation</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Continuous relaxation allows the reparameterization trick to be used on discrete variables. It involves denoting discrete random variables, e.g. \(x \sim Bernoulli(\theta)\), as a discontinuous function of a continuous variable, e.g. \(H(z, \theta)\) where \(z \sim Uniform(0, 1)\) and \(H(z, \theta) = (z < \theta)\). The discontinuous function is then `relaxed' into a continuous function with a temperature parameter 
+\(\lambda > 0\) such that the approximation becomes exact as \(\lambda \rightarrow 0\). Lambda is tuned to minimise the trade-off between bias (for high \(\lambda\)) and variance (for small \(\lambda\)). 
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org20d85fc" class="outline-2">
+<h2 id="org20d85fc"><span class="section-number-2">3</span> REBAR</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+REBAR attempts to use a continuous relaxation as a control variate. Let \(x\) be a discrete random variable, and we want to calculate the derivative of an expectation of \(f(x)\):
+</p>
+\begin{align}
+\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f_\theta(x)]
+&= \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(z)}[f_\theta(H(z))] \\
+&= \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(z)}[f_\theta(H(z)) - f_\theta(\sigma_\lambda(z))] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(z)}[ f_\theta(\sigma_\lambda(z))]
+\end{align}
+<p>
+where \(z\) is a continuous random variable and \(H\) is a discontinuous function such that \(H(z) \overset{d}{=} x\). \(\sigma_\lambda(z)\) tends to \(H(z)\) (in some sense, not sure which) as \(\lambda \rightarrow 0\).
+</p>
+</div>
+</div>
