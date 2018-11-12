@@ -9,6 +9,12 @@ plugins: [jekyll-paginate]
 port: 3000
 safe: true
 
+defaults:
+ - scope:
+     path: _posts
+   values:
+         layout: post
+         mathjax: true
 
 # edit here to achieve your personal greatness
 url: http://cs.ubc.ca/~wsgh/

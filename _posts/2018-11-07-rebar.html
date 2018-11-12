@@ -1,7 +1,6 @@
 ---
 layout: post
 title: REBAR
-mathjax: true
 ---
 
 <div id="outline-container-org3fca780" class="outline-2">
@@ -40,12 +39,14 @@ However, this estimator has very high variance. This paper looks at how to reduc
 Control variates can be used in combination with REINFORCE to reduce the variance:
 </p>
 \begin{align}
-\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f(x)]
-&= \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f(x)-c(x)] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}(c(x)) \\
-&= \mathbb{E}_{p_\theta(x)} [(f(x) - c(x)) \frac{\partial}{\partial \theta}\log p_\theta(x)] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}(c(x))
+\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(b)}[f(b)]
+&= \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(b, c)}[f(b)-c] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(b,c)}[c] \\
+&= \mathbb{E}_{p_\theta(b, c)} [(f(b) - c) \frac{\partial}{\partial \theta}\log p_\theta(b, c)] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(c)}[c] \\
+&= \mathbb{E}_{p_\theta(b, c)} [(f(b) - c) \frac{\partial}{\partial \theta}\log p_\theta(b)] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(c)}[c] 
 \end{align}
 <p>
-\(c\) can be chosen so that there is a closed-form expression for the second term, \(\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}(c(x))\), and so that it is close to \(f(x)\), reducing the variance in estimates of the first term. However, there can still be high variance. Finding a good \(c\) is also presumably hard to automate.
+The last step follows because \(p(c|b)\) is independent of \(\theta\)? No. Because of the main trick in the paper then?
+\(c\) can be chosen so that there is a closed-form expression for the second term, \(\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}(c(x))\), and so that it is close to \(f(x)\). Since the variance introduced by the REINFORCE estimator is related to \(|f(b)-c|\), this reduces the variance in estimates of the first term. However, finding a good \(c\) is difficult.
 </p>
 </div>
 </div>
@@ -53,8 +54,7 @@ Control variates can be used in combination with REINFORCE to reduce the varianc
 <h3 id="org36168c8"><span class="section-number-3">2.2</span> Continuous relaxation</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
-Continuous relaxation allows the reparameterization trick to be used on discrete variables. It involves denoting discrete random variables, e.g. \(x \sim Bernoulli(\theta)\), as a discontinuous function of a continuous variable, e.g. \(H(z, \theta)\) where \(z \sim Uniform(0, 1)\) and \(H(z, \theta) = (z < \theta)\). The discontinuous function is then `relaxed' into a continuous function with a temperature parameter 
-\(\lambda > 0\) such that the approximation becomes exact as \(\lambda \rightarrow 0\). Lambda is tuned to minimise the trade-off between bias (for high \(\lambda\)) and variance (for small \(\lambda\)). 
+Continuous relaxation allows the reparameterization trick to be used on discrete variables. It involves denoting discrete random variables, e.g. \(x \sim Bernoulli(\theta)\), as a discontinuous function of a continuous variable, e.g. \(H(z, \theta)\) where \(z \sim Uniform(0, 1)\) and \(H(z, \theta) = (z < \theta)\). The discontinuous function is then `relaxed' into a continuous function with a temperature parameter \(\lambda > 0\) such that the approximation becomes exact as \(\lambda \rightarrow 0\). Lambda is tuned to minimise the trade-off between bias (for high \(\lambda\)) and variance (for small \(\lambda\)).
 </p>
 </div>
 </div>
@@ -63,16 +63,94 @@ Continuous relaxation allows the reparameterization trick to be used on discrete
 <div id="outline-container-org74eff0f" class="outline-2">
 <h2 id="org74eff0f"><span class="section-number-2">3</span> REBAR</h2>
 <div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-orga37320d" class="outline-3">
+<h3 id="orga37320d"><span class="section-number-3">3.1</span> Continuous relaxation as a control variate</h3>
+<div class="outline-text-3" id="text-3-1">
 <p>
-REBAR attempts to use a continuous relaxation as a control variate. Let \(x\) be a discrete random variable, and we want to calculate the derivative of an expectation of \(f(x)\):
+REBAR [<a href="#graves2016adaptive">1</a>] attempts to use a continuous relaxation as a control variate.
+</p>
+
+<p>
+Let \(b \sim Bernoulli(\theta)\), and suppose we want to calculate \(\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(b)}[f_\theta(b)]\). From now on, we drop the subscript \(\theta\) for cleaner notation. To estimate this, we reparameterize \(b\) as \(H(z) \approx \sigma_\lambda(z)\):
 </p>
 \begin{align}
-\frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(x)}[f_\theta(x)]
-&= \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(z)}[f_\theta(H(z))] \\
-&= \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(z)}[f_\theta(H(z)) - f_\theta(\sigma_\lambda(z))] + \frac{\partial}{\partial \theta} \mathbb{E}_{p_\theta(z)}[ f_\theta(\sigma_\lambda(z))]
+\frac{\partial}{\partial \theta} \mathbb{E}_{p(b)}[f(b)]
+&= \frac{\partial}{\partial \theta} \mathbb{E}_{p(z)}[f(H(z))] \\
+&= \frac{\partial}{\partial \theta} \mathbb{E}_{p(z)}[f(H(z)) - \eta f(\sigma_\lambda(z))] + \frac{\partial}{\partial \theta} \mathbb{E}_{p(z)}[\eta f(\sigma_\lambda(z))] \\
+&= \mathbb{E}_{p(z)}[(f(H(z)) - \eta f(\sigma_\lambda(z))) \frac{\partial}{\partial \theta} \log p(z)]  + {E}_{p(z)}[\eta \frac{\partial}{\partial \theta} f(\sigma_\lambda(z))] 
+\end{align}
+</div>
+</div>
+<div id="outline-container-org4d8e621" class="outline-3">
+<h3 id="org4d8e621"><span class="section-number-3">3.2</span> Getting rid of \(\log p(z)\)</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+The paper's main trick is finding a clever way to marginalise out the \(\log p(z)\), and instead use \(\log p(b)\), which is much less noisy:
+It is simple to show that the \(\mathbb{E}_{p(z)}[f(H(z)) \frac{\partial}{\partial \theta} \log p(z)] = \mathbb{E}_{p(z)[f(b) \frac{\partial}{\partial \theta} \log p(b)]\) (they are REINFORCE estimators of the same gradient), so we consider how to do a similar trick on \(\mathbb{E}_{p(z)}[f(\sigma_\lambda(z) \frac{\partial}{\partial \theta} \log p(z)]\):
+</p>
+\begin{align}
+\mathbb{E}_{p(z)}[f(\sigma_\lambda(z) \frac{\partial}{\partial \theta} \log p(z)]
+&= \mathbb{E}_{p(b)}\mathbb{E}_{p(z|b)}[f(\sigma_\lambda(z)) \frac{\partial}{\partial \theta} \log p(z, b)] \quad \text{as } p(z, b) = p(z) \\
+&= \mathbb{E}_{p(b)}\mathbb{E}_{p(z|b)}[f(\sigma_\lambda(z)) \frac{\partial}{\partial \theta} \log p(b)] + \mathbb{E}_{p(b)}\mathbb{E}_{p(z|b)}[f(\sigma_\lambda(z)) \frac{\partial}{\partial \theta} \log p(z|b)] \\
+&= \mathbb{E}_{p(b)}[\mathbb{E}_{p(z|b)}[f(\sigma_\lambda(z))] \frac{\partial}{\partial \theta} \log p(b)] + \mathbb{E}_{p(b)}[ \frac{\partial}{\partial \theta} \mathbb{E}_{p(z|b)}[f(\sigma_\lambda(z))]] \\
+&= \mathbb{E}_{p(b)}[\mathbb{E}_{p(z|b)}[f(\sigma_\lambda(z))] \frac{\partial}{\partial \theta} \log p(b)] + \mathbb{E}_{p(b)}[ \mathbb{E}_{p(z|b)}[\frac{\partial}{\partial \theta} f(\sigma_\lambda(z)) ]]
 \end{align}
 <p>
-where \(z\) is a continuous random variable and \(H\) is a discontinuous function such that \(H(z) \overset{d}{=} x\). \(\sigma_\lambda(z)\) tends to \(H(z)\) (in some sense, not sure which) as \(\lambda \rightarrow 0\).
+We then define reparameterizations, \(z \equiv g(u, \theta) \sim p(z)\) and \(\hat{z} \equiv g(v, H(z), \theta) \sim p(z|H(z))\) and define the expectation as being over \(u\) and \(v\):
+\[
+\frac{\partial}{\partial \theta} \mathbb{E}_{p(u, v)} \bigg[ (f(H(z)) - \eta f(\sigma_\lambda(\hat{z}))) \frac{\partial}{\partial \theta} \log p(b) \Big|_{b=H(z)} - \eta \frac{\partial}{\partial \theta} f(\sigma_\lambda(\hat{z})) + \eta \frac{\partial}{\partial \theta} f(\sigma_\lambda(z)) \bigg]
+\]
+We now rely on \(f(H(z))\) being close to \(f(\sigma_\lambda(\hat{z}))\) for the use of the control variate to reduce variance. Intuitively, this seems okay as, while \(\hat{z}\) is not equal to \(z\), it is conditioned on \(H(z)\).
 </p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orga463833" class="outline-2">
+<h2 id="orga463833"><span class="section-number-2">4</span> Extra Bits</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-org77cfe30" class="outline-3">
+<h3 id="org77cfe30"><span class="section-number-3">4.1</span> Optimizing temperature</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+The gradient is unbiased for any \(\lambda\), so \(\lambda\) can be optimised solely to minimise the variance. It is possible to differentiate the variance w.r.t \(\lambda\), so this can be optimised online along with \(\theta\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgf3a6949" class="outline-3">
+<h3 id="orgf3a6949"><span class="section-number-3">4.2</span> Multilayer stochastic graphs</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+It is easy to generalise if there are independent random variables (e.g. a single layer of stochastic units in a network). However, if there are discrete variables with distributions dependent on earlier variables (e.g. multiple stochastic layers connected together), it is not so obvious how to apply this. They discuss this in more detail&#x2026;
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org2344e83" class="outline-2">
+<h2 id="org2344e83"><span class="section-number-2">5</span> References</h2>
+<div class="outline-text-2" id="text-5">
+<div id="bibliography">
+<h2>References</h2>
+
+<table>
+
+<tr valign="top">
+<td align="right" class="bibtexnumber">
+[<a name="graves2016adaptive">1</a>]
+</td>
+<td class="bibtexitem">
+Alex Graves.
+ Adaptive computation time for recurrent neural networks.
+ <em>arXiv preprint arXiv:1603.08983</em>, 2016.
+[&nbsp;<a href="bibfile_bib.html#graves2016adaptive">bib</a>&nbsp;]
+
+</td>
+</tr>
+</table>
+</div>
 </div>
 </div>

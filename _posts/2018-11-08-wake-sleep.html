@@ -1,0 +1,113 @@
+---
+layout: post
+title: Wake-Sleep
+mathjax: true
+---
+
+<div id="outline-container-org5496509" class="outline-2">
+<h2 id="org5496509"><span class="section-number-2">1</span> Wake-Sleep</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-org95a8967" class="outline-3">
+<h3 id="org95a8967"><span class="section-number-3">1.1</span> Objective</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+Stated aim is to maximise ELBO (summed over \(y\) from a dataset):
+\[
+ELBO(\theta, \phi) = \int q_\phi(x|y) \log \frac{p_\theta(x, y)}{q_\phi(x|y)} = \log p_\theta(y) - D_{KL}(q_\phi(x|y) || p_{\theta}(x|y))
+\]
+This should simultaneously maximise the model evidence, and minimise the KL divergence between the \(q(x|y)\) and the true posterior. However, the actual KL divergence used is \(D_{KL}(p||q)\) and not \(D_{KL}(p||q)\). Therefore, the objective may be more accurately stated as ``learn \(\theta\) to maximize the ELBO over a dataset and \(\phi\) so that $q<sub>&phi;</sub>(x|y) is close to \(p_\theta(x|y)\) for the learned &theta;".
+</p>
+</div>
+</div>
+
+<div id="outline-container-org58ae2fe" class="outline-3">
+<h3 id="org58ae2fe"><span class="section-number-3">1.2</span> Wake Phase</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+In the wake phase, the model is trained with the following gradient, using observations, \(y\), sampled from the dataset:
+\[
+\frac{\partial}{\partial \theta} ELBO(\theta, \phi) = \frac{\partial}{\partial \theta} \mathbb{E}_{q_\phi(x|y)}[\log p_\theta(x, y)]
+\]
+</p>
+</div>
+</div>
+<div id="outline-container-org9bf6ab3" class="outline-3">
+<h3 id="org9bf6ab3"><span class="section-number-3">1.3</span> Sleep phase</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+In the sleep phase, the guide is trained according to samples from the model:
+\[
+\frac{\partial}{\partial \phi} ELBO(\theta, \phi) \approx  \frac{\partial}{\partial \phi} \mathbb{E}_{p_\theta(x,y)}[\log q_\phi(x|y)]
+\]
+Note that this gradient is actually the derivative of the \(D_{KL}(p||q)\), whereas it should be \(D_{KL}(q||p)\) to satisfy the stated objective.
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgca3147b" class="outline-3">
+<h3 id="orgca3147b"><span class="section-number-3">1.4</span> With discrete variables</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+It applies easily to \(p\) or \(q\) with discrete variables since the derivative w.r.t. \(\theta\) when the expectation is over \(\phi\) and vice versa. This means that the gradient and expectation can always be swapped.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org98237d0" class="outline-2">
+<h2 id="org98237d0"><span class="section-number-2">2</span> Reweighted Wake Sleep [<a href="#"></a>]</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+This paper attempts to improve on wake-sleep by using importance weighting to correct the KL divergence used in the sleep phase.
+</p>
+</div>
+
+<div id="outline-container-org9e405d6" class="outline-3">
+<h3 id="org9e405d6"><span class="section-number-3">2.1</span> Wake Phase</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+Instead of learning \(\theta\) to optimize the ELBO, it is learned to directly optimize \(\log p(y)\):
+</p>
+\begin{align}
+\frac{\partial}{\partial \theta} \log p_\theta(y) &= \frac{1}{p(y)} \frac{\partial}{\partial \theta} \log p_\theta(y) \\
+&= \frac{1}{p_\theta(y)} \frac{\partial}{\partial\theta} \mathbb{E}_{q_\phi(x|y)}[\frac{p_\theta(x,y)}{q_\phi(x|y)}] \\
+&= \frac{1}{p_\theta(y)} \mathbb{E}_{q_\phi(x|y)}[\frac{p_\theta(x,y)}{q_\phi(x|y)} \frac{\partial}{\partial\theta} \log p(x, y)] \\
+& \approx \sum_{k=1}^K \tilde{w}^k \frac{\partial}{\partial\theta} \log p(x^k, y)
+\end{align}
+<p>
+where \(\tilde{w}^k = \frac{w^k}{\sum_{k=1}^K w^k}\) with \(w^k = \frac{p(x, y)}{q(x|y)}\) with \(x \sim q(x|y)\).  (i.e. they are normalised importance weights)
+</p>
+
+<p>
+In reweighted wake-sleep, \(\phi\) can also be updated in the wake phase:
+</p>
+\begin{align}
+\frac{\partial}{\partial \phi} ELBO(\theta, \phi) &\approx  \frac{\partial}{\partial \phi} \mathbb{E}_{p_\theta(x,y)}[\log q_\phi(x|y)] \\
+&= \mathbb{E}_{p_\theta(x,y)}[\frac{\partial}{\partial \phi} \log q_\phi(x|y)] \\
+&\approx \sum_{k=1}^K \hat{w}^k \frac{\partial}{\partial \phi} \log q_\phi(x^k|y)
+\end{align}
+<p>
+with \(\hat{w}^k\) and \(x^k\) constructed as before. Note that this again optimises \(D_{KL}(p||q)\) not \(D_{KL}(q||p)\).
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5f8a2f2" class="outline-3">
+<h3 id="org5f8a2f2"><span class="section-number-3">2.2</span> Sleep Phase</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+\(\phi\) can also be updated in a sleep phase. This is done in exactly the same way as in non-reweighted wake-sleep, so again minimises \(D_{KL}(p||q)\). According to Tuan Anh's notes "it is usually advantageous to use the wake update of ϕ (rather than the sleep update of ϕ) because the target is minimizing the expected KL divergence under the true rather than the current data distribution".
+</p>
+</div>
+</div>
+
+<div id="outline-container-org9cd9599" class="outline-3">
+<h3 id="org9cd9599"><span class="section-number-3">2.3</span> Benefits vs unreweighted</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+Less noisy estimates of gradient for model learning. Wake-phase update of inference network optimises guide for true distribution.
+</p>
+</div>
+</div>
+</div>
