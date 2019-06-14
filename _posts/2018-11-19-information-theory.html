@@ -1,0 +1,157 @@
+---
+layout: post
+title: Information Theory
+---
+
+<p>
+Some basic information theory.
+</p>
+
+<div id="outline-container-org4dc825f" class="outline-2">
+<h2 id="org4dc825f"><span class="section-number-2">1</span> Entropy</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+All expectations are over every random variable in the expression.
+</p>
+
+<p>
+\[
+H[X] = \mathbb{E}_{p(x)} [-\log p(x)]
+\]
+</p>
+</div>
+
+<div id="outline-container-orgcf567bc" class="outline-3">
+<h3 id="orgcf567bc"><span class="section-number-3">1.1</span> Conditional Entropy</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+\[
+H[X | Y] = \mathbb{E}_{p(x,y)} [-\log p(x|y)]
+\]
+</p>
+</div>
+</div>
+
+<div id="outline-container-org982b9ad" class="outline-3">
+<h3 id="org982b9ad"><span class="section-number-3">1.2</span> Joint Entropy</h3>
+<div class="outline-text-3" id="text-1-2">
+\begin{align}
+H[X, Y] &= \mathbb{E}_{p(x,y)} [-\log p(x,y)] \\
+&= \mathbb{E}_{p(x,y)} [-\log p(x) - \log p(y|x)] \\
+&= H[X] + H[Y|X]
+\end{align}
+
+<p>
+These can be manipulated easily since they are all just expectations of log probabilities over `everything'.
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org524c302" class="outline-2">
+<h2 id="org524c302"><span class="section-number-2">2</span> Mutual Information and Relative Entropy</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org0eae25d" class="outline-3">
+<h3 id="org0eae25d"><span class="section-number-3">2.1</span> Relative Entropy/KL Divergence</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+\[
+D(p||q) = \mathbb{E}_{p(x)} \left[ \frac{\log p(x)}{\log q(x)} \right]
+\]
+</p>
+</div>
+</div>
+<div id="outline-container-org7f6c778" class="outline-3">
+<h3 id="org7f6c778"><span class="section-number-3">2.2</span> Mutual Information</h3>
+<div class="outline-text-3" id="text-2-2">
+\begin{align}
+I[X;Y] &= H[X]-H[X|Y] \\
+&= \mathbb{E}_{p(x, y)} \left[\log \frac{p(x|y)}{p(x)}\right] \label{expected-kl-prior-posterior} \\
+&= \mathbb{E}_{p(x, y)} \left[\log \frac{p(x,y)}{p(x)p(y)}\right] \label{kl-join-product}
+\end{align}
+
+<ul class="org-ul">
+<li>Equation \ref{kl-joint-product} is clearly symmetric, so \(I[X; Y] \equiv I[Y; X]\).</li>
+
+<li>From equation \ref{expected-kl-prior-posterior}, it is also equal to the expected KL divergence between the prior and posterior.</li>
+
+<li>It is also equal to the relative entropy (Kullback-Leibler divergence) between the joint probability and the product of the marginals:</li>
+</ul>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgabbfc27" class="outline-2">
+<h2 id="orgabbfc27"><span class="section-number-2">3</span> Differential Entropy</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Let \(f(x)\) be the pdf for \(X\). Define the differential entropy as:
+</p>
+\begin{align}
+h(X) &= - \int f(x) \log f(x) dx \\
+&= \mathbb{E} [ - \log f(x) ]
+\end{align}
+<p>
+\(h(X)\) can be interpreted as logarithm of rough side length of smallest set that contains most of the probability mass (by considering the typical set - won't go into more details here).
+</p>
+
+<p>
+We can relate this to entropy of a discrete variable by considering \(X_\Delta\), a quantisation of \(X\):
+</p>
+\begin{align}
+\mathbb{P}(X^\Delta = x_i) &= \int_{x_i}^{x_{i+1}} f(x) dx \\
+&\approx \Delta f(x_i)
+\end{align}
+<p>
+with bins spaced by \(x_{i+1} - x_i = \Delta\). Note that the approximation can be made exact with the mean value theorem by slightly reformulating.
+</p>
+\begin{align}
+H[X^\Delta] &= - \sum x_i \log p(x_i) \\
+&= - \sum \Delta f(x_i) \log ( \Delta f(x_i) ) \\
+&\approx - \log \Delta - \sum \Delta f(x_i) \log ( f(x_i) ) \\
+&\approx - \log \Delta - h[X]
+\end{align}
+<p>
+So they are related by \(\log \Delta\).
+</p>
+</div>
+
+<div id="outline-container-org6d50666" class="outline-3">
+<h3 id="org6d50666"><span class="section-number-3">3.1</span> Conditional Differential Entropy</h3>
+<div class="outline-text-3" id="text-3-1">
+\begin{align}
+h(X|Y) = \mathbb{E}[-\log f(x|y)]
+\end{align}
+</div>
+</div>
+
+<div id="outline-container-orgc633337" class="outline-3">
+<h3 id="orgc633337"><span class="section-number-3">3.2</span> Joint Differential Entropy</h3>
+<div class="outline-text-3" id="text-3-2">
+\begin{align}
+h(X,Y) &= \mathbb{E}[-\log f(x,y)] \\
+&= \mathbb{E}[-\log f(x) - \log f(y|x)] \\
+&= h(X) + h(Y|X)
+\end{align}
+</div>
+</div>
+<div id="outline-container-orgf6719c7" class="outline-3">
+<h3 id="orgf6719c7"><span class="section-number-3">3.3</span> Relative Differential Entropy</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+\[
+D(f||g) = \mathbb{E}_{f(x)} \left[ \frac{\log f(x)}{\log g(x)} \right]
+\]
+</p>
+</div>
+</div>
+<div id="outline-container-org88514fa" class="outline-3">
+<h3 id="org88514fa"><span class="section-number-3">3.4</span> Mutual Information</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+Again, mutual information is defined as the relative entropy between the joint and the product of marginals. The properties are the same as in the discrete case.
+</p>
+</div>
+</div>
+</div>

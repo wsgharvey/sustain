@@ -1,0 +1,60 @@
+---
+layout: post
+title: Importance Sampling
+---
+
+<p>
+Brief notes on importance sampling for my own future reference. [<a href="#mnih2014recurrent">mnih2014recurrent</a>]</p>
+
+<div id="outline-container-orge2a877f" class="outline-2">
+<h2 id="orge2a877f"><span class="section-number-2">1</span> Importance Sampling</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Want to calculate an expectation over the posterior:
+</p>
+
+<p>
+\[
+\mathbb{E}_{x \sim p(x|y)} [ f(x) ] = \int f(x) p(x|y) dx
+\]
+</p>
+
+<p>
+This is proportional to the expectation over the joint (and we are able to compute the pdf of the joint):
+</p>
+
+<p>
+\[
+= \frac{1}{p(y)} \int f(x) p(x, y) dx
+\] 
+</p>
+
+<p>
+And then do the trick to use \(q(x)\):
+</p>
+
+\begin{align*}
+&= \frac{1}{p(y)} \int f(x) \frac{p(x, y)}{q(x)} q(x) dx \\
+&=  \frac{1}{p(y)} \mathbb{E}_{x \sim q(x)} [f(x) \frac{p(x, y)}{q(x)} ] \\
+&\approx \frac{1}{p(y)} \sum_{n=1}^N f(x^n)  \frac{p(x^n, y)}{q(x^n)}, \quad x^n \sim q(x)
+\end{align*}
+
+<p>
+The expectation of the normalising constants is given by:
+</p>
+
+<p>
+\[
+ \mathbb{E}_{x \sim q(x)} [ \frac{p(x, y)}{q(x)} ] = \int \frac{p(x, y)}{q(x)} q(x) dx = p(y)
+\]
+</p>
+
+<p>
+i.e. the average of the importance weights is an unbiased estimator of the model evidence. \(p(y)\) is therefore calculated by averaging the normalising weights to use in the above expression.
+</p>
+
+<p>
+To calculate the expectation, we must normalise by an empirical estimate of the model evidence (from averaging the weights) and so it is not unbiased.
+</p>
+</div>
+</div>

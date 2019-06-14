@@ -1,2 +1,2 @@
-jekyll build
-scp -r _site/* wsgh@remote.cs.ubc.ca:public_html 
+bundle exec jekyll build
+scp -r _site/* ubc:public_html 
